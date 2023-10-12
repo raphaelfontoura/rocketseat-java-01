@@ -11,8 +11,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
+
+import com.github.raphaelfontoura.todolist.common.ErrorModel;
 
 @RestController
 @RequestMapping("/users")
@@ -34,18 +35,12 @@ public class UserController {
 
   @ExceptionHandler(IllegalArgumentException.class)
   public ResponseEntity<ErrorModel> badRequestError(IllegalArgumentException exception) {
-    var error = new ErrorModel();
-    error.setStatus(HttpStatus.BAD_REQUEST.value());
-    error.setMessage(exception.getMessage());
-    error.setTimestamp(Instant.now());
+    var error = new ErrorModel(
+    HttpStatus.BAD_REQUEST.value(),
+    exception.getMessage(),
+    Instant.now()
+    );
     return ResponseEntity.badRequest().body(error);
   }
   
-}
-
-@Data
-class ErrorModel {
-  private int status;
-  private String message;
-  private Instant timestamp;
 }
