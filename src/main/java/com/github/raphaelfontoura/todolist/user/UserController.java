@@ -19,17 +19,11 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class UserController {
 
-  private final IUserRepository userRepository;
+  private final UserService userService;
 
   @PostMapping
   public ResponseEntity<UserModel> create(@RequestBody UserModel userModel) {
-    var user = userRepository.findByUsername(userModel.getUsername());
-    if (user != null) {
-      System.out.println("Usuário existente");
-      // return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Usuário já existe");
-      throw new IllegalArgumentException("usuário já existe.");
-    };
-    var userCreated = userRepository.save(userModel);
+    var userCreated = userService.saveUser(userModel);
     var uri = UriComponentsBuilder.newInstance()
       .scheme("http")
       .host("localhost")
