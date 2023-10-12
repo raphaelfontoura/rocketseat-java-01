@@ -4,11 +4,6 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Stream;
-
-import org.springframework.beans.BeanUtils;
-import org.springframework.beans.BeanWrapper;
-import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.github.raphaelfontoura.todolist.common.ErrorModel;
+import com.github.raphaelfontoura.todolist.utils.BeanUpdateUtil;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -56,23 +52,14 @@ public class TaskController {
   @PutMapping("/{id}")
   public TaskModel update(@RequestBody TaskModel taskModel, @PathVariable UUID id, HttpServletRequest request) {
     var taskEntity = taskRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Task não encontrada. Verifique."));
-    updateTaskModel(taskEntity, taskModel);
-    return taskRepository.save(taskModel);
+    BeanUpdateUtil.updateBean(taskModel, taskEntity);
+    return taskRepository.save(taskEntity);
   }
 
   private void validateTaskModel(TaskModel taskModel) {
     var currentDate = LocalDateTime.now();
     if (currentDate.isAfter(taskModel.getStartAt())) throw new IllegalArgumentException("Data de início deve ser maior que a data atual");
     if (taskModel.getEndAt().isBefore(taskModel.getStartAt())) throw new IllegalArgumentException("Data final deve ser maior que a data de início");
-  }
-
-  private void updateTaskModel(TaskModel taskEntity, TaskModel taskInput) {
-    final BeanWrapper input = new BeanWrapperImpl(taskInput);
-    String[] filterNull = Stream.of(input.getPropertyDescriptors())
-      .map(p -> p.getName())
-      .filter(pname -> input.getPropertyValue(pname) == null)
-      .toArray(String[]::new);
-    BeanUtils.copyProperties(taskInput, taskEntity, filterNull);
   }
 
   @ExceptionHandler
