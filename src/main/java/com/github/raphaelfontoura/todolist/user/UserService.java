@@ -16,7 +16,6 @@ public class UserService {
 
   public UserModel saveUser(UserModel userModel) {
     if (repository.findByUsername(userModel.getUsername()) != null) {
-      System.out.println("Usuário existente");
       throw new IllegalArgumentException("usuário já existe.");
     }
     var hashedPassword = BCrypt.withDefaults().hashToString(12, userModel.getPassword().toCharArray());
