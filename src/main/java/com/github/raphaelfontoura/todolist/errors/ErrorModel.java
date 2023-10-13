@@ -1,4 +1,4 @@
-package com.github.raphaelfontoura.todolist.common;
+package com.github.raphaelfontoura.todolist.errors;
 
 import java.time.Instant;
 

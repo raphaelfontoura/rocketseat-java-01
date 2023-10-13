@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.github.raphaelfontoura.todolist.common.ErrorModel;
+import com.github.raphaelfontoura.todolist.errors.ErrorModel;
 import com.github.raphaelfontoura.todolist.utils.BeanUpdateUtil;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -64,24 +64,6 @@ public class TaskController {
     if (taskModel.getEndAt().isBefore(taskModel.getStartAt())) throw new IllegalArgumentException("Data final deve ser maior que a data de início");
   }
 
-  @ExceptionHandler(UserNotAllowedException.class)
-  public ResponseEntity<ErrorModel> illegalAccessException(UserNotAllowedException exception) {
-    var error = new ErrorModel(
-    HttpStatus.FORBIDDEN.value(),
-    exception.getMessage(),
-    Instant.now()
-    );
-    return ResponseEntity.badRequest().body(error);
-  }
   
-  @ExceptionHandler
-  public ResponseEntity<ErrorModel> badRequestError(RuntimeException exception) {
-    var error = new ErrorModel(
-    HttpStatus.BAD_REQUEST.value(),
-    exception.getMessage(),
-    Instant.now()
-    );
-    return ResponseEntity.badRequest().body(error);
-  }
 
 }
