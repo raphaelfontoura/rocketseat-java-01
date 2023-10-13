@@ -34,26 +34,28 @@ public class TaskController {
   private String headerUserId;
   
   @PostMapping
-  public TaskModel create(@RequestBody TaskModel taskModel, HttpServletRequest request) {
+  public ResponseEntity<TaskModel> create(@RequestBody TaskModel taskModel, HttpServletRequest request) {
     var userId = request.getAttribute(headerUserId).toString();
     taskModel.setIdUser(UUID.fromString(userId));
     validateTaskModel(taskModel);
     var taskCreated = taskRepository.save(taskModel);
-    return taskCreated;
+    return ResponseEntity.status(HttpStatus.CREATED).body(taskCreated);
   }
 
   @GetMapping
-  public List<TaskModel> list(HttpServletRequest request) {
+  public ResponseEntity<List<TaskModel>> list(HttpServletRequest request) {
     var userId = request.getAttribute(headerUserId).toString();
     var tasks = taskRepository.findByIdUser(UUID.fromString(userId));
-    return tasks;
+    return ResponseEntity.ok(tasks);
   }
 
   @PutMapping("/{id}")
-  public TaskModel update(@RequestBody TaskModel taskModel, @PathVariable UUID id, HttpServletRequest request) {
-    var taskEntity = taskRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Task não encontrada. Verifique."));
+  public ResponseEntity<TaskModel> update(@RequestBody TaskModel taskModel, @PathVariable UUID id, HttpServletRequest request) {
+    TaskModel taskEntity = taskRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Task não encontrada. Verifique."));
+    var userId = request.getAttribute(headerUserId).toString();
+    if (! UUID.fromString(userId).equals(taskEntity.getIdUser())) throw new UserNotAllowedException("Acesso não permitido a este usuário.");
     BeanUpdateUtil.updateBean(taskModel, taskEntity);
-    return taskRepository.save(taskEntity);
+    return ResponseEntity.ok(taskRepository.save(taskEntity));
   }
 
   private void validateTaskModel(TaskModel taskModel) {
@@ -62,6 +64,16 @@ public class TaskController {
     if (taskModel.getEndAt().isBefore(taskModel.getStartAt())) throw new IllegalArgumentException("Data final deve ser maior que a data de início");
   }
 
+  @ExceptionHandler(UserNotAllowedException.class)
+  public ResponseEntity<ErrorModel> illegalAccessException(UserNotAllowedException exception) {
+    var error = new ErrorModel(
+    HttpStatus.FORBIDDEN.value(),
+    exception.getMessage(),
+    Instant.now()
+    );
+    return ResponseEntity.badRequest().body(error);
+  }
+  
   @ExceptionHandler
   public ResponseEntity<ErrorModel> badRequestError(RuntimeException exception) {
     var error = new ErrorModel(
