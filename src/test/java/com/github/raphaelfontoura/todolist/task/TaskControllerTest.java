@@ -111,4 +111,33 @@ public class TaskControllerTest {
         .andExpect(jsonPath("$.description").value(taskModel.getDescription()))
         .andExpect(jsonPath("$.idUser").value(user.getId().toString()));
   }
+
+  @Test
+  void testUpdateShouldReturnForbiddenWhenUserNotAllowed() throws Exception {
+    taskModel.setIdUser(user.getId());
+    taskRepository.save(taskModel);
+    var updateTask = new TaskModel();
+    updateTask.setTitle("new title");
+    var otherBasicAuth = getBasicAuthorizationFromOtherUser();
+
+    mockMvc.perform(put("/tasks/{idTask}", taskModel.getId().toString())
+        .servletPath("/tasks/"+taskModel.getId().toString())
+        .accept(MediaType.APPLICATION_JSON)
+        .header(HttpHeaders.AUTHORIZATION, otherBasicAuth)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(mapper.writeValueAsString(updateTask)))
+        .andExpect(status().isForbidden());
+  }
+
+  private String getBasicAuthorizationFromOtherUser() {
+    var password = "123456";
+    user = new UserModel();
+    user.setName("other user");
+    user.setUsername("other");
+    user.setPassword(password);
+    userService.saveUser(user);
+
+    var credentials = user.getUsername() + ":" + password;
+    return "Basic " + Base64.getEncoder().encodeToString(credentials.getBytes());
+  }
 }
